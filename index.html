@@ -1,16 +1,80 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <meta name="theme-color" content="#your-brand-color">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <title>UI/UX Test</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/index.tsx"></script>
-  </body>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>The Ruin Hiriketiya</title>
+  <link rel="stylesheet" href="/index.css" />
+  <link
+    rel="preload"
+    href="https://uploadthingy.s3.us-west-1.amazonaws.com/q2Cv5K93wFYPkqzZ35hSAd/480738701_1494041901533684_5740182246678582737_n.jpg"
+    as="image"
+  />
+  <style>
+    /* Default body background */
+    body {
+      background-color: #f0f0f0; /* Light gray fallback */
+      min-height: 100vh;
+    }
+
+    /* iOS-specific viewport */
+    .ios-device {
+      min-height: calc(100vh + env(safe-area-inset-top) + env(safe-area-inset-bottom));
+      height: calc(var(--vh, 1vh) * 100 + env(safe-area-inset-top) + env(safe-area-inset-bottom));
+      -webkit-overflow-scrolling: touch;
+    }
+
+    /* Optimize backdrop-filter for iOS */
+    .ios-device .backdrop-blur-sm { -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); }
+    .ios-device .backdrop-blur-md { -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+    .ios-device .backdrop-blur-lg { -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
+
+    /* Fallback for older iOS */
+    @supports not ((-webkit-backdrop-filter: blur(8px)) or (backdrop-filter: blur(8px))) {
+      .ios-device .backdrop-blur-sm,
+      .ios-device .backdrop-blur-md,
+      .ios-device .backdrop-blur-lg {
+        background-color: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+    }
+
+    /* Simplify animations for iOS */
+    .ios-device .animate-pulse,
+    .ios-device .animate-slide-in-right,
+    .ios-device .animate-slide-in-left,
+    .ios-device .hover\:scale-105:hover,
+    .ios-device .group-hover\:scale-110 {
+      animation: none !important;
+      transform: none !important;
+      transition: opacity 0.3s ease-out;
+    }
+
+    @keyframes iosFadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    .ios-device .animate-fadeInScale {
+      animation: iosFadeIn 0.5s ease-out;
+    }
+
+    /* Prevent iOS zoom */
+    .ios-device input,
+    .ios-device textarea,
+    .ios-device select {
+      font-size: 16px;
+    }
+
+    /* Lazy load images */
+    img:not([src*="ruin.png"]) {
+      loading: lazy;
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="module" src="/src/index.tsx"></script>
+</body>
 </html>
