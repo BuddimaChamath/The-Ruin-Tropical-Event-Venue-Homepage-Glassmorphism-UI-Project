@@ -19,12 +19,15 @@ export function App() {
   const [isIOS, setIsIOS] = useState(false);
 
   useEffect(() => {
-    // Enhanced iOS detection
+    // More reliable iOS detection
     const detectIOS = () => {
-      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
-                    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-      const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-      return isIOS || (isSafari && 'ontouchstart' in window);
+      const userAgent = navigator.userAgent.toLowerCase();
+      const isIOSDevice = /ipad|iphone|ipod/.test(userAgent) || 
+                         (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+      const isSafari = /safari/.test(userAgent) && !/chrome/.test(userAgent);
+      const isWebKit = 'WebkitAppearance' in document.documentElement.style;
+      
+      return isIOSDevice || (isSafari && isWebKit);
     };
 
     const iosDetected = detectIOS();
@@ -34,53 +37,63 @@ export function App() {
     const setVH = () => {
       const vh = window.innerHeight * 0.01;
       document.documentElement.style.setProperty('--vh', `${vh}px`);
-      
-      // Also set a CSS custom property for full viewport height
       document.documentElement.style.setProperty('--full-height', `${window.innerHeight}px`);
     };
 
-    // Add iOS-specific classes and setup
+    // iOS-specific setup
     if (iosDetected) {
       document.body.classList.add('ios-device');
       document.documentElement.classList.add('ios-device');
       
-      // Initial viewport setup
       setVH();
       
-      // Handle viewport changes on iOS
-      window.addEventListener('resize', setVH);
-      window.addEventListener('orientationchange', () => {
-        // Delay to account for iOS Safari's animation
-        setTimeout(setVH, 150);
-      });
-
-      // Handle iOS Safari address bar changes
-      const handleScroll = () => {
-        // Update viewport height when address bar hides/shows
-        if (Math.abs(window.innerHeight - parseInt(getComputedStyle(document.documentElement).getPropertyValue('--full-height'))) > 50) {
-          setVH();
-        }
+      // Handle viewport changes
+      const handleResize = () => {
+        setVH();
+        // Force repaint to fix background issues
+        document.body.style.transform = 'translateZ(0)';
+        requestAnimationFrame(() => {
+          document.body.style.transform = '';
+        });
       };
 
-      window.addEventListener('scroll', handleScroll, { passive: true });
+      const handleOrientationChange = () => {
+        setTimeout(() => {
+          setVH();
+          // Force background refresh
+          const sections = document.querySelectorAll('section[style*="background-image"]');
+          sections.forEach(section => {
+            const element = section as HTMLElement;
+            const currentBg = element.style.backgroundImage;
+            element.style.backgroundImage = '';
+            requestAnimationFrame(() => {
+              element.style.backgroundImage = currentBg;
+            });
+          });
+        }, 300);
+      };
 
-      // Cleanup function for iOS-specific listeners
+      window.addEventListener('resize', handleResize);
+      window.addEventListener('orientationchange', handleOrientationChange);
+
+      // Cleanup
       return () => {
-        window.removeEventListener('resize', setVH);
-        window.removeEventListener('scroll', handleScroll);
+        window.removeEventListener('resize', handleResize);
+        window.removeEventListener('orientationchange', handleOrientationChange);
       };
     }
 
-    // Set page as loaded after a small delay for animation purposes
+    // Set page as loaded
     const timer = setTimeout(() => {
       setIsPageLoaded(true);
       
-      // Apply background fix for iOS after page load
+      // Apply iOS fixes after page load
       if (iosDetected) {
         applyIOSBackgroundFix();
       }
     }, 100);
 
+    // Section scroll tracking
     const handleSectionScroll = () => {
       const sections = document.querySelectorAll('section[id]');
       sections.forEach(section => {
@@ -95,7 +108,6 @@ export function App() {
       });
     };
 
-    // Use passive listener for better performance
     window.addEventListener('scroll', handleSectionScroll, { passive: true });
     
     return () => {
@@ -104,20 +116,42 @@ export function App() {
     };
   }, []);
 
-  // Function to apply iOS background fixes
+  // Enhanced iOS background fix
   const applyIOSBackgroundFix = () => {
-    // Find all elements with background images and fixed attachment
-    const elementsWithBg = document.querySelectorAll('[style*="background"]');
+    const backgroundImage = 'https://uploadthingy.s3.us-west-1.amazonaws.com/q2Cv5K93wFYPkqzZ35hSAd/480738701_1494041901533684_5740182246678582737_n.jpg';
     
-    elementsWithBg.forEach((element) => {
-      const htmlElement = element as HTMLElement;
-      const style = htmlElement.style;
-      
-      if (style.backgroundAttachment === 'fixed') {
-        // Remove fixed attachment and add iOS-specific class
-        style.backgroundAttachment = 'scroll';
-        htmlElement.classList.add('fixed-bg', 'parallax-bg');
-      }
+    // Create a fixed background element for iOS
+    const fixedBg = document.createElement('div');
+    fixedBg.id = 'ios-fixed-background';
+    fixedBg.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-image: url(${backgroundImage});
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      z-index: -999;
+      will-change: transform;
+      transform: translateZ(0);
+    `;
+    
+    // Remove existing fixed background if it exists
+    const existingBg = document.getElementById('ios-fixed-background');
+    if (existingBg) {
+      existingBg.remove();
+    }
+    
+    document.body.appendChild(fixedBg);
+    
+    // Update all sections to use transparent backgrounds on iOS
+    const sections = document.querySelectorAll('section[style*="background-image"]');
+    sections.forEach(section => {
+      const element = section as HTMLElement;
+      element.style.backgroundImage = 'none';
+      element.classList.add('ios-transparent-bg');
     });
   };
 
@@ -127,7 +161,6 @@ export function App() {
         isPageLoaded ? 'opacity-100' : 'opacity-0'
       } ${isIOS ? 'ios-optimized ios-viewport-fix' : ''}`}
       style={{
-        // Enhanced iOS viewport fix
         minHeight: isIOS ? 'calc(var(--vh, 1vh) * 100)' : '100vh',
         height: isIOS ? 'calc(var(--vh, 1vh) * 100)' : 'auto'
       }}

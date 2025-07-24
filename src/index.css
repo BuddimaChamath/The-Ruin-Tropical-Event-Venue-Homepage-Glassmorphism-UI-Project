@@ -4,7 +4,7 @@
 @import 'tailwindcss/utilities';
 /* DO NOT DELETE THESE TAILWIND IMPORTS, OTHERWISE THE STYLING WILL NOT RENDER AT ALL */
 
-/* iOS Safari background-attachment: fixed fallback */
+/* Enhanced iOS Safari background-attachment: fixed fallback */
 .ios-device .fixed-bg {
   background-attachment: scroll !important;
   background-size: cover !important;
@@ -12,39 +12,50 @@
   background-repeat: no-repeat !important;
 }
 
-/* Enhanced iOS viewport handling */
+/* iOS viewport handling */
 .ios-device {
-  /* Prevent bounce scrolling */
   -webkit-overflow-scrolling: touch;
-  /* Fix iOS Safari viewport issues */
   height: 100vh;
   height: calc(var(--vh, 1vh) * 100);
 }
 
-/* iOS-specific body fixes */
-.ios-device body {
-  /* Prevent rubber band effect */
-  position: fixed;
-  overflow: hidden;
-  width: 100%;
-  height: 100vh;
-  height: calc(var(--vh, 1vh) * 100);
+/* Alternative parallax effect for iOS using transform */
+@supports (-webkit-touch-callout: none) {
+  /* iOS-specific parallax sections */
+  .ios-parallax-section {
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .ios-parallax-section::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 120vh;
+    background-image: inherit;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: scroll;
+    z-index: -2;
+    will-change: transform;
+  }
+  
+  .ios-parallax-section::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: inherit;
+    z-index: -1;
+  }
 }
 
-/* Main content wrapper for iOS */
-.ios-device .main-wrapper {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100vh;
-  height: calc(var(--vh, 1vh) * 100);
-  overflow-y: auto;
-  overflow-x: hidden;
-  -webkit-overflow-scrolling: touch;
-}
-
-/* Alternative background technique for iOS */
+/* Alternative approach - Create pseudo-fixed background for iOS */
 .ios-device .parallax-bg {
   position: relative;
   overflow: hidden;
@@ -53,15 +64,38 @@
 .ios-device .parallax-bg::before {
   content: '';
   position: absolute;
-  top: -20%;
-  left: 0;
-  width: 100%;
-  height: 120%;
+  top: -50px;
+  left: -50px;
+  width: calc(100% + 100px);
+  height: calc(100% + 100px);
   background-image: inherit;
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
+  background-attachment: scroll;
   z-index: -1;
+  will-change: transform;
+  transform: translateZ(0);
+}
+
+/* iOS-specific section styling */
+.ios-device section[style*="background-image"] {
+  position: relative;
+}
+
+.ios-device section[style*="background-image"]::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-image: inherit;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: scroll;
+  z-index: -2;
   will-change: transform;
 }
 
@@ -84,4 +118,31 @@
   .ios-viewport-fix {
     min-height: -webkit-fill-available;
   }
+  
+  /* Force repaint for better background handling */
+  .ios-device section {
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+  }
+}
+
+/* Alternative background approach using CSS custom properties */
+.ios-device .background-section {
+  --bg-image: url('https://uploadthingy.s3.us-west-1.amazonaws.com/q2Cv5K93wFYPkqzZ35hSAd/480738701_1494041901533684_5740182246678582737_n.jpg');
+  position: relative;
+}
+
+.ios-device .background-section::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: var(--bg-image);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  z-index: -1;
+  will-change: transform;
 }

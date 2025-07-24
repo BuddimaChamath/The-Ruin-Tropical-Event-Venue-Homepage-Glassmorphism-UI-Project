@@ -1,16 +1,14 @@
 import React, { memo, useEffect, useState } from 'react';
 import { Calendar, MapPin, Star, Users } from 'lucide-react';
 
-
 const AboutSection = () => {
   const [isIOS, setIsIOS] = useState(false);
 
   useEffect(() => {
-    // Detect iOS for background handling
+    // Simple iOS detection
     const detectIOS = () => {
       return /iPad|iPhone|iPod/.test(navigator.userAgent) || 
-             (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1) ||
-             /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+             (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
     };
 
     setIsIOS(detectIOS());
@@ -57,14 +55,12 @@ const AboutSection = () => {
     }
   ];
 
-  // Different background styles for iOS vs other devices
-  const backgroundStyle = isIOS ? {
-    backgroundImage: `url(https://uploadthingy.s3.us-west-1.amazonaws.com/q2Cv5K93wFYPkqzZ35hSAd/480738701_1494041901533684_5740182246678582737_n.jpg)`,
-    backgroundSize: 'cover',
-    backgroundPosition: 'center',
-    backgroundRepeat: 'no-repeat',
-    backgroundAttachment: 'scroll'
+  // Conditional rendering based on device type
+  const sectionStyle = isIOS ? {
+    // For iOS: Use transparent background, rely on fixed background element
+    backgroundColor: 'transparent'
   } : {
+    // For other devices: Use normal parallax background
     backgroundImage: `url(https://uploadthingy.s3.us-west-1.amazonaws.com/q2Cv5K93wFYPkqzZ35hSAd/480738701_1494041901533684_5740182246678582737_n.jpg)`,
     backgroundSize: 'cover',
     backgroundPosition: 'center',
@@ -75,31 +71,10 @@ const AboutSection = () => {
     <section 
       id="about" 
       className={`relative py-20 ${isIOS ? 'ios-section' : ''}`}
-      style={{
-        backgroundImage: `url(https://uploadthingy.s3.us-west-1.amazonaws.com/q2Cv5K93wFYPkqzZ35hSAd/480738701_1494041901533684_5740182246678582737_n.jpg)`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundAttachment: 'fixed'
-      }}
+      style={sectionStyle}
     >
       {/* Glassmorphism overlay */}
       <div className="absolute inset-0 bg-gradient-to-br from-white/20 via-white/15 to-white/10 backdrop-blur-sm"></div>
-      
-      {/* iOS-specific background layer */}
-      {isIOS && (
-        <div 
-          className="absolute inset-0 -z-10"
-          style={{
-            backgroundImage: `url(https://uploadthingy.s3.us-west-1.amazonaws.com/q2Cv5K93wFYPkqzZ35hSAd/480738701_1494041901533684_5740182246678582737_n.jpg)`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            backgroundRepeat: 'no-repeat',
-            backgroundAttachment: 'scroll',
-            transform: 'scale(1.05)', // Slight scale to prevent white edges
-            filter: 'brightness(0.9)'
-          }}
-        />
-      )}
 
       <div className="container mx-auto px-4 relative z-10">
         {/* Header with glassmorphism card */}
