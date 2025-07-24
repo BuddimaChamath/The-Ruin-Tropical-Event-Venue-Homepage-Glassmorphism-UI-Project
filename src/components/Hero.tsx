@@ -1,11 +1,21 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 const Hero = () => {
   const textRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const [isIOS, setIsIOS] = useState(false);
 
   useEffect(() => {
+    // Detect iOS for background handling
+    const detectIOS = () => {
+      return /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+             (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1) ||
+             /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+    };
+
+    setIsIOS(detectIOS());
+
     if (textRef.current && buttonRef.current) {
       textRef.current.classList.add('opacity-100', 'translate-y-0');
       setTimeout(() => {
@@ -14,17 +24,19 @@ const Hero = () => {
         }
       }, 400);
       
-      // Add subtle parallax effect
-      const handleScroll = () => {
-        if (containerRef.current) {
-          const scrolled = window.pageYOffset;
-          const parallax = scrolled * 0.3;
-          containerRef.current.style.transform = `translateY(${parallax}px)`;
-        }
-      };
-      
-      window.addEventListener('scroll', handleScroll);
-      return () => window.removeEventListener('scroll', handleScroll);
+      // Add parallax effect only for non-iOS devices
+      if (!detectIOS()) {
+        const handleScroll = () => {
+          if (containerRef.current) {
+            const scrolled = window.pageYOffset;
+            const parallax = scrolled * 0.3;
+            containerRef.current.style.transform = `translateY(${parallax}px)`;
+          }
+        };
+        
+        window.addEventListener('scroll', handleScroll, { passive: true });
+        return () => window.removeEventListener('scroll', handleScroll);
+      }
     }
   }, []);
 
@@ -37,19 +49,44 @@ const Hero = () => {
     }
   };
 
+  // Different background styles for iOS vs other devices
+  const backgroundStyle = isIOS ? {
+    backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.2)), url(https://uploadthingy.s3.us-west-1.amazonaws.com/q2Cv5K93wFYPkqzZ35hSAd/480738701_1494041901533684_5740182246678582737_n.jpg)`,
+    backgroundSize: 'cover',
+    backgroundPosition: 'center',
+    backgroundRepeat: 'no-repeat',
+    backgroundAttachment: 'scroll'
+  } : {
+    backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.2)), url(https://uploadthingy.s3.us-west-1.amazonaws.com/q2Cv5K93wFYPkqzZ35hSAd/480738701_1494041901533684_5740182246678582737_n.jpg)`,
+    backgroundSize: 'cover',
+    backgroundPosition: 'center',
+    backgroundAttachment: 'fixed'
+  };
+
   return (
     <section 
       id="hero" 
-      className="relative w-full min-h-screen flex items-center justify-center text-white overflow-hidden" 
-      style={{
-        backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.2)), url(https://uploadthingy.s3.us-west-1.amazonaws.com/q2Cv5K93wFYPkqzZ35hSAd/480738701_1494041901533684_5740182246678582737_n.jpg)`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundAttachment: 'fixed'
-      }}
+      className={`relative w-full min-h-screen flex items-center justify-center text-white overflow-hidden ${isIOS ? 'ios-hero' : ''}`}
+      style={backgroundStyle}
     >
       {/* Animated background overlay */}
       <div className="absolute inset-0 bg-gradient-to-br from-black/20 via-transparent to-black/30 animate-pulse"></div>
+      
+      {/* iOS-specific background layer */}
+      {isIOS && (
+        <div 
+          className="absolute inset-0 -z-10"
+          style={{
+            backgroundImage: `url(https://uploadthingy.s3.us-west-1.amazonaws.com/q2Cv5K93wFYPkqzZ35hSAd/480738701_1494041901533684_5740182246678582737_n.jpg)`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            backgroundRepeat: 'no-repeat',
+            backgroundAttachment: 'scroll',
+            transform: 'scale(1.1)', // Slight scale to prevent white edges
+            filter: 'brightness(0.8)'
+          }}
+        />
+      )}
       
       {/* Glassmorphism content container */}
       <div 

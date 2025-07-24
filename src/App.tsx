@@ -19,36 +19,69 @@ export function App() {
   const [isIOS, setIsIOS] = useState(false);
 
   useEffect(() => {
-    // Detect iOS devices
+    // Enhanced iOS detection
     const detectIOS = () => {
-      return /iPad|iPhone|iPod/.test(navigator.userAgent) || 
-             (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+                    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+      const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+      return isIOS || (isSafari && 'ontouchstart' in window);
     };
 
-    // Fix viewport height issues on iOS
+    const iosDetected = detectIOS();
+    setIsIOS(iosDetected);
+
+    // Enhanced viewport height handling for iOS
     const setVH = () => {
       const vh = window.innerHeight * 0.01;
       document.documentElement.style.setProperty('--vh', `${vh}px`);
+      
+      // Also set a CSS custom property for full viewport height
+      document.documentElement.style.setProperty('--full-height', `${window.innerHeight}px`);
     };
-    
-    setIsIOS(detectIOS());
 
-    // Add iOS-specific class to body for CSS targeting
-    if (detectIOS()) {
+    // Add iOS-specific classes and setup
+    if (iosDetected) {
       document.body.classList.add('ios-device');
+      document.documentElement.classList.add('ios-device');
+      
+      // Initial viewport setup
       setVH();
+      
+      // Handle viewport changes on iOS
       window.addEventListener('resize', setVH);
       window.addEventListener('orientationchange', () => {
-        setTimeout(setVH, 100);
+        // Delay to account for iOS Safari's animation
+        setTimeout(setVH, 150);
       });
+
+      // Handle iOS Safari address bar changes
+      const handleScroll = () => {
+        // Update viewport height when address bar hides/shows
+        if (Math.abs(window.innerHeight - parseInt(getComputedStyle(document.documentElement).getPropertyValue('--full-height'))) > 50) {
+          setVH();
+        }
+      };
+
+      window.addEventListener('scroll', handleScroll, { passive: true });
+
+      // Cleanup function for iOS-specific listeners
+      return () => {
+        window.removeEventListener('resize', setVH);
+        window.removeEventListener('scroll', handleScroll);
+      };
     }
 
     // Set page as loaded after a small delay for animation purposes
     const timer = setTimeout(() => {
       setIsPageLoaded(true);
+      
+      // Apply background fix for iOS after page load
+      if (iosDetected) {
+        applyIOSBackgroundFix();
+      }
     }, 100);
 
-    const handleScroll = () => {
+    const handleSectionScroll = () => {
       const sections = document.querySelectorAll('section[id]');
       sections.forEach(section => {
         const sectionElement = section as HTMLElement;
@@ -62,31 +95,46 @@ export function App() {
       });
     };
 
-    // Use passive listener for better iOS performance
-    window.addEventListener('scroll', handleScroll, { passive: true });
+    // Use passive listener for better performance
+    window.addEventListener('scroll', handleSectionScroll, { passive: true });
     
     return () => {
-      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('scroll', handleSectionScroll);
       clearTimeout(timer);
-      if (detectIOS()) {
-        window.removeEventListener('resize', setVH);
-      }
     };
   }, []);
 
+  // Function to apply iOS background fixes
+  const applyIOSBackgroundFix = () => {
+    // Find all elements with background images and fixed attachment
+    const elementsWithBg = document.querySelectorAll('[style*="background"]');
+    
+    elementsWithBg.forEach((element) => {
+      const htmlElement = element as HTMLElement;
+      const style = htmlElement.style;
+      
+      if (style.backgroundAttachment === 'fixed') {
+        // Remove fixed attachment and add iOS-specific class
+        style.backgroundAttachment = 'scroll';
+        htmlElement.classList.add('fixed-bg', 'parallax-bg');
+      }
+    });
+  };
+
   return (
     <div 
-      className={`min-h-screen bg-white font-sans transition-opacity duration-500 ${
+      className={`main-wrapper min-h-screen bg-white font-sans transition-opacity duration-500 ${
         isPageLoaded ? 'opacity-100' : 'opacity-0'
-      } ${isIOS ? 'ios-optimized' : ''}`}
+      } ${isIOS ? 'ios-optimized ios-viewport-fix' : ''}`}
       style={{
-        // iOS specific viewport fix
-        minHeight: isIOS ? 'calc(var(--vh, 1vh) * 100)' : '100vh'
+        // Enhanced iOS viewport fix
+        minHeight: isIOS ? 'calc(var(--vh, 1vh) * 100)' : '100vh',
+        height: isIOS ? 'calc(var(--vh, 1vh) * 100)' : 'auto'
       }}
     >
       {showAnnouncement && <AnnouncementBar onClose={() => setShowAnnouncement(false)} />}
       <Navbar activeSection={activeSection} />
-      <main>
+      <main className={isIOS ? 'ios-main-content' : ''}>
         <Hero />
         <AboutSection />
         <BookingSection />
