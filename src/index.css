@@ -3,3 +3,138 @@
 @import 'tailwindcss/components';
 @import 'tailwindcss/utilities';
 /* DO NOT DELETE THESE TAILWIND IMPORTS, OTHERWISE THE STYLING WILL NOT RENDER AT ALL */
+
+/* iOS Safari Specific Fixes */
+@supports (-webkit-appearance: none) {
+  /* Force hardware acceleration for better performance on iOS */
+  * {
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+  }
+}
+
+/* Fix for background images on iOS */
+.bg-fixed {
+  /* Override Tailwind's bg-fixed for iOS compatibility */
+  background-attachment: scroll !important;
+}
+
+@media screen and (-webkit-min-device-pixel-ratio: 2) {
+  /* High DPI iOS devices */
+  .bg-fixed {
+    background-attachment: scroll !important;
+  }
+}
+
+/* Enhanced backdrop blur support for iOS */
+.backdrop-blur-sm,
+.backdrop-blur,
+.backdrop-blur-md,
+.backdrop-blur-lg,
+.backdrop-blur-xl {
+  -webkit-backdrop-filter: blur(var(--tw-backdrop-blur));
+  backdrop-filter: blur(var(--tw-backdrop-blur));
+  /* Fallback for older iOS versions */
+  background-color: rgba(255, 255, 255, 0.8);
+  background-color: rgba(var(--tw-bg-opacity, 1));
+}
+
+/* Fix for iOS color profile issues */
+img, video, canvas, svg {
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+}
+
+/* Prevent iOS zoom on input focus */
+input, select, textarea {
+  font-size: 16px !important;
+  -webkit-appearance: none;
+  border-radius: 0;
+}
+
+/* Fix for iOS scroll issues */
+body {
+  -webkit-overflow-scrolling: touch;
+  overflow-scrolling: touch;
+}
+
+/* Enhanced gradient support for iOS */
+.bg-gradient-to-r,
+.bg-gradient-to-l,
+.bg-gradient-to-t,
+.bg-gradient-to-b,
+.bg-gradient-to-tr,
+.bg-gradient-to-tl,
+.bg-gradient-to-br,
+.bg-gradient-to-bl {
+  background-image: linear-gradient(var(--tw-gradient-direction), var(--tw-gradient-stops));
+  background-image: -webkit-linear-gradient(var(--tw-gradient-direction), var(--tw-gradient-stops));
+}
+
+/* Fix for transform issues on iOS */
+.transform {
+  -webkit-transform: var(--tw-transform);
+  transform: var(--tw-transform);
+}
+
+/* Ensure proper rendering of shadows on iOS */
+.shadow,
+.shadow-sm,
+.shadow-md,
+.shadow-lg,
+.shadow-xl,
+.shadow-2xl {
+  -webkit-box-shadow: var(--tw-shadow);
+  box-shadow: var(--tw-shadow);
+}
+
+/* Fix for flexbox issues on older iOS versions */
+.flex {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+}
+
+.flex-col {
+  -webkit-flex-direction: column;
+  -ms-flex-direction: column;
+  flex-direction: column;
+}
+
+.items-center {
+  -webkit-align-items: center;
+  -ms-flex-align: center;
+  align-items: center;
+}
+
+.justify-center {
+  -webkit-justify-content: center;
+  -ms-flex-pack: center;
+  justify-content: center;
+}
+
+/* Fix for position sticky on iOS */
+.sticky {
+  position: -webkit-sticky;
+  position: sticky;
+}
+
+/* Custom media query for iOS devices */
+@supports (-webkit-touch-callout: none) {
+  /* iOS-specific styles */
+  .bg-attachment-fixed {
+    background-attachment: scroll;
+  }
+  
+  /* Force GPU acceleration for smoother animations */
+  .transition,
+  .transition-all,
+  .transition-colors,
+  .transition-opacity,
+  .transition-transform {
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+    will-change: transform;
+  }
+}
