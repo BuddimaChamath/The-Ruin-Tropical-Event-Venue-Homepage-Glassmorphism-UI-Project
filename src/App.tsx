@@ -19,90 +19,91 @@ export function App() {
   const [isIOS, setIsIOS] = useState(false);
 
   useEffect(() => {
-    // More reliable iOS detection
+    // Simplified and more reliable iOS detection
     const detectIOS = () => {
+      // Check user agent
       const userAgent = navigator.userAgent.toLowerCase();
-      const isIOSDevice = /ipad|iphone|ipod/.test(userAgent) || 
-                         (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-      const isSafari = /safari/.test(userAgent) && !/chrome/.test(userAgent);
-      const isWebKit = 'WebkitAppearance' in document.documentElement.style;
+      const isIOSUserAgent = /ipad|iphone|ipod/.test(userAgent);
       
-      return isIOSDevice || (isSafari && isWebKit);
+      // Check for iPad Pro (which reports as MacIntel)
+      const isIPadPro = navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1;
+      
+      // Check for Safari on macOS (which might be iOS in disguise)
+      const isSafariMobile = /safari/.test(userAgent) && /mobile/.test(userAgent);
+      
+      // Additional iOS 13+ detection
+      const isIOSNew = navigator.platform === 'MacIntel' && 'ontouchend' in document;
+      
+      return isIOSUserAgent || isIPadPro || isSafariMobile || isIOSNew;
     };
 
     const iosDetected = detectIOS();
     setIsIOS(iosDetected);
+    
+    console.log('iOS detected:', iosDetected); // Debug log
 
-    // Enhanced viewport height handling for iOS
+    // Enhanced viewport height handling
     const setVH = () => {
       const vh = window.innerHeight * 0.01;
       document.documentElement.style.setProperty('--vh', `${vh}px`);
       document.documentElement.style.setProperty('--full-height', `${window.innerHeight}px`);
     };
 
+    setVH();
+
     // iOS-specific setup
     if (iosDetected) {
       document.body.classList.add('ios-device');
       document.documentElement.classList.add('ios-device');
       
-      setVH();
+      // Create a single fixed background for all sections
+      createIOSBackground();
       
-      // Handle viewport changes
+      // Handle viewport changes with debouncing
+      let resizeTimeout: NodeJS.Timeout;
       const handleResize = () => {
-        setVH();
-        // Force repaint to fix background issues
-        document.body.style.transform = 'translateZ(0)';
-        requestAnimationFrame(() => {
-          document.body.style.transform = '';
-        });
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(() => {
+          setVH();
+        }, 100);
       };
 
       const handleOrientationChange = () => {
         setTimeout(() => {
           setVH();
-          // Force background refresh
-          const sections = document.querySelectorAll('section[style*="background-image"]');
-          sections.forEach(section => {
-            const element = section as HTMLElement;
-            const currentBg = element.style.backgroundImage;
-            element.style.backgroundImage = '';
-            requestAnimationFrame(() => {
-              element.style.backgroundImage = currentBg;
-            });
-          });
-        }, 300);
+          // Refresh background after orientation change
+          createIOSBackground();
+        }, 500);
       };
 
-      window.addEventListener('resize', handleResize);
+      window.addEventListener('resize', handleResize, { passive: true });
       window.addEventListener('orientationchange', handleOrientationChange);
 
       // Cleanup
       return () => {
         window.removeEventListener('resize', handleResize);
         window.removeEventListener('orientationchange', handleOrientationChange);
+        clearTimeout(resizeTimeout);
       };
     }
 
     // Set page as loaded
     const timer = setTimeout(() => {
       setIsPageLoaded(true);
-      
-      // Apply iOS fixes after page load
-      if (iosDetected) {
-        applyIOSBackgroundFix();
-      }
     }, 100);
 
-    // Section scroll tracking
+    // Section scroll tracking (simplified)
     const handleSectionScroll = () => {
       const sections = document.querySelectorAll('section[id]');
+      const scrollPos = window.scrollY + 100;
+      
       sections.forEach(section => {
         const sectionElement = section as HTMLElement;
-        const sectionTop = sectionElement.offsetTop - 100;
+        const sectionTop = sectionElement.offsetTop;
         const sectionHeight = sectionElement.offsetHeight;
         const sectionId = sectionElement.getAttribute('id');
         
-        if (window.scrollY >= sectionTop && window.scrollY < sectionTop + sectionHeight) {
+        if (scrollPos >= sectionTop && scrollPos < sectionTop + sectionHeight) {
           setActiveSection(sectionId || '');
         }
       });
@@ -116,42 +117,43 @@ export function App() {
     };
   }, []);
 
-  // Enhanced iOS background fix
-  const applyIOSBackgroundFix = () => {
-    const backgroundImage = 'https://uploadthingy.s3.us-west-1.amazonaws.com/q2Cv5K93wFYPkqzZ35hSAd/480738701_1494041901533684_5740182246678582737_n.jpg';
-    
-    // Create a fixed background element for iOS
-    const fixedBg = document.createElement('div');
-    fixedBg.id = 'ios-fixed-background';
-    fixedBg.style.cssText = `
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background-image: url(${backgroundImage});
-      background-size: cover;
-      background-position: center;
-      background-repeat: no-repeat;
-      z-index: -999;
-      will-change: transform;
-      transform: translateZ(0);
-    `;
-    
-    // Remove existing fixed background if it exists
+  // Simplified iOS background creation
+  const createIOSBackground = () => {
+    // Remove existing background
     const existingBg = document.getElementById('ios-fixed-background');
     if (existingBg) {
       existingBg.remove();
     }
     
-    document.body.appendChild(fixedBg);
+    // Create new background element
+    const backgroundDiv = document.createElement('div');
+    backgroundDiv.id = 'ios-fixed-background';
+    backgroundDiv.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background-image: url('https://uploadthingy.s3.us-west-1.amazonaws.com/q2Cv5K93wFYPkqzZ35hSAd/480738701_1494041901533684_5740182246678582737_n.jpg');
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      z-index: -1000;
+      pointer-events: none;
+    `;
     
-    // Update all sections to use transparent backgrounds on iOS
-    const sections = document.querySelectorAll('section[style*="background-image"]');
-    sections.forEach(section => {
-      const element = section as HTMLElement;
-      element.style.backgroundImage = 'none';
-      element.classList.add('ios-transparent-bg');
+    document.body.appendChild(backgroundDiv);
+    
+    // Force all sections to use transparent backgrounds
+    requestAnimationFrame(() => {
+      const sections = document.querySelectorAll('section');
+      sections.forEach(section => {
+        const element = section as HTMLElement;
+        if (element.style.backgroundImage) {
+          element.style.backgroundImage = 'none';
+          element.classList.add('ios-transparent-bg');
+        }
+      });
     });
   };
 
@@ -159,10 +161,10 @@ export function App() {
     <div 
       className={`main-wrapper min-h-screen bg-white font-sans transition-opacity duration-500 ${
         isPageLoaded ? 'opacity-100' : 'opacity-0'
-      } ${isIOS ? 'ios-optimized ios-viewport-fix' : ''}`}
+      } ${isIOS ? 'ios-optimized' : ''}`}
       style={{
         minHeight: isIOS ? 'calc(var(--vh, 1vh) * 100)' : '100vh',
-        height: isIOS ? 'calc(var(--vh, 1vh) * 100)' : 'auto'
+        backgroundColor: isIOS ? 'transparent' : 'white'
       }}
     >
       {showAnnouncement && <AnnouncementBar onClose={() => setShowAnnouncement(false)} />}
