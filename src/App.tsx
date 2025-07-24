@@ -37,6 +37,7 @@ export function App() {
     const iosDetected = detectIOS();
     setIsIOS(iosDetected);
     console.log('iOS detected:', iosDetected, 'User Agent:', navigator.userAgent);
+    console.log('App component mounted:', { isPageLoaded, activeSection });
 
     // Viewport height handling
     const setVH = () => {
@@ -46,6 +47,7 @@ export function App() {
         const safeAreaBottom = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('env(safe-area-inset-bottom)') || '0');
         document.documentElement.style.setProperty('--vh', `${vh}px`);
         document.documentElement.style.setProperty('--full-height', `calc(${window.innerHeight}px + ${safeAreaTop + safeAreaBottom}px)`);
+        console.log('Viewport set:', { vh, safeAreaTop, safeAreaBottom });
       } catch (e) {
         console.error('setVH failed:', e);
       }
@@ -88,6 +90,7 @@ export function App() {
     // Page load animation
     const timer = setTimeout(() => {
       setIsPageLoaded(true);
+      console.log('Page loaded:', { isPageLoaded: true });
     }, 100);
 
     // Section scroll tracking
@@ -103,11 +106,19 @@ export function App() {
         
         if (scrollPos >= sectionTop && scrollPos < sectionTop + sectionHeight) {
           setActiveSection(sectionId || '');
+          console.log('Active section:', sectionId);
         }
       });
     };
 
     window.addEventListener('scroll', handleSectionScroll, { passive: true });
+
+    // Debug component rendering
+    console.log('Rendering components:', {
+      Hero: !!document.getElementById('hero'),
+      Navbar: !!document.querySelector('nav'),
+      About: !!document.getElementById('about'),
+    });
 
     return () => {
       window.removeEventListener('scroll', handleSectionScroll);
@@ -138,15 +149,16 @@ export function App() {
         -webkit-transform: translateZ(0);
       `;
 
-      document.body.prepend(backgroundDiv); // Prepend to ensure it's behind content
+      document.body.prepend(backgroundDiv);
+      console.log('iOS background created');
 
-      // Ensure sections are transparent
+      // Ensure sections are transparent but visible
       requestAnimationFrame(() => {
-        document.querySelectorAll('section:not(#hero)').forEach(section => {
+        document.querySelectorAll('section:not(#hero), footer').forEach(section => {
           const element = section as HTMLElement;
           element.style.backgroundImage = 'none';
           element.style.backgroundColor = 'transparent';
-          element.classList.add('ios-transparent-bg');
+          element.classList.add('ios-transparent-bg', 'debug-visible');
         });
       });
     } catch (e) {
@@ -158,14 +170,16 @@ export function App() {
     <div 
       className={`main-wrapper min-h-screen font-sans transition-opacity duration-500 ${
         isPageLoaded ? 'opacity-100' : 'opacity-0'
-      } ${isIOS ? 'ios-optimized bg-transparent' : 'bg-transparent'}`}
+      } ${isIOS ? 'ios-optimized bg-transparent debug-visible' : 'bg-transparent'}`}
       style={{
         minHeight: isIOS ? 'calc(var(--vh, 1vh) * 100 + env(safe-area-inset-top) + env(safe-area-inset-bottom))' : '100vh',
+        position: 'relative',
+        zIndex: 10,
       }}
     >
       {showAnnouncement && <AnnouncementBar onClose={() => setShowAnnouncement(false)} />}
       <Navbar activeSection={activeSection} />
-      <main className={isIOS ? 'ios-main-content bg-transparent' : ''}>
+      <main className={isIOS ? 'ios-main-content bg-transparent debug-visible' : ''} style={{ position: 'relative', zIndex: 10 }}>
         <Hero />
         <AboutSection />
         <BookingSection />

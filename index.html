@@ -15,7 +15,7 @@
   <style>
     /* Default body background */
     body {
-      background-color: #f0f0f0; /* Light gray fallback */
+      background-color: #f0f0f0;
       min-height: 100vh;
     }
 
@@ -24,6 +24,16 @@
       min-height: calc(100vh + env(safe-area-inset-top) + env(safe-area-inset-bottom));
       height: calc(var(--vh, 1vh) * 100 + env(safe-area-inset-top) + env(safe-area-inset-bottom));
       -webkit-overflow-scrolling: touch;
+    }
+
+    /* Ensure content visibility on iOS */
+    .ios-device .main-wrapper,
+    .ios-device main,
+    .ios-device section,
+    .ios-device footer {
+      position: relative;
+      z-index: 10; /* Above #ios-fixed-background */
+      background-color: transparent;
     }
 
     /* Optimize backdrop-filter for iOS */
@@ -70,6 +80,13 @@
     /* Lazy load images */
     img:not([src*="ruin.png"]) {
       loading: lazy;
+    }
+
+    /* Debug: Force content visibility */
+    .ios-device .debug-visible {
+      background-color: rgba(255, 255, 255, 0.3) !important;
+      border: 2px solid red !important;
+      z-index: 100 !important;
     }
   </style>
 </head>
