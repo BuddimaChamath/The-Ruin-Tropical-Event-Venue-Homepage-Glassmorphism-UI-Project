@@ -19,7 +19,7 @@ export function App() {
   const [isIOS, setIsIOS] = useState(false);
 
   useEffect(() => {
-    // iOS detection
+    // Improved iOS detection
     const detectIOS = () => {
       try {
         const userAgent = navigator.userAgent.toLowerCase();
@@ -36,18 +36,18 @@ export function App() {
 
     const iosDetected = detectIOS();
     setIsIOS(iosDetected);
-    console.log('iOS detected:', iosDetected, 'User Agent:', navigator.userAgent);
-    console.log('App component mounted:', { isPageLoaded, activeSection });
+    console.log('iOS detected:', iosDetected);
 
     // Viewport height handling
     const setVH = () => {
       try {
         const vh = window.innerHeight * 0.01;
-        const safeAreaTop = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('env(safe-area-inset-top)') || '0');
-        const safeAreaBottom = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('env(safe-area-inset-bottom)') || '0');
         document.documentElement.style.setProperty('--vh', `${vh}px`);
-        document.documentElement.style.setProperty('--full-height', `calc(${window.innerHeight}px + ${safeAreaTop + safeAreaBottom}px)`);
-        console.log('Viewport set:', { vh, safeAreaTop, safeAreaBottom });
+        
+        if (iosDetected) {
+          // For iOS, also set a custom property for full height
+          document.documentElement.style.setProperty('--ios-height', `${window.innerHeight}px`);
+        }
       } catch (e) {
         console.error('setVH failed:', e);
       }
@@ -55,19 +55,18 @@ export function App() {
 
     setVH();
 
-    // iOS-specific background
+    // iOS-specific setup
     if (iosDetected) {
       document.body.classList.add('ios-device');
       document.documentElement.classList.add('ios-device');
+      
+      // Create simplified iOS background
       createIOSBackground();
 
-      let resizeTimeout: NodeJS.Timeout;
       const handleResize = () => {
-        clearTimeout(resizeTimeout);
-        resizeTimeout = setTimeout(() => {
-          setVH();
-          createIOSBackground();
-        }, 100);
+        setVH();
+        // Recreate background on resize for iOS
+        setTimeout(createIOSBackground, 100);
       };
 
       const handleOrientationChange = () => {
@@ -83,14 +82,12 @@ export function App() {
       return () => {
         window.removeEventListener('resize', handleResize);
         window.removeEventListener('orientationchange', handleOrientationChange);
-        clearTimeout(resizeTimeout);
       };
     }
 
     // Page load animation
     const timer = setTimeout(() => {
       setIsPageLoaded(true);
-      console.log('Page loaded:', { isPageLoaded: true });
     }, 100);
 
     // Section scroll tracking
@@ -106,19 +103,11 @@ export function App() {
         
         if (scrollPos >= sectionTop && scrollPos < sectionTop + sectionHeight) {
           setActiveSection(sectionId || '');
-          console.log('Active section:', sectionId);
         }
       });
     };
 
     window.addEventListener('scroll', handleSectionScroll, { passive: true });
-
-    // Debug component rendering
-    console.log('Rendering components:', {
-      Hero: !!document.getElementById('hero'),
-      Navbar: !!document.querySelector('nav'),
-      About: !!document.getElementById('about'),
-    });
 
     return () => {
       window.removeEventListener('scroll', handleSectionScroll);
@@ -128,37 +117,41 @@ export function App() {
 
   const createIOSBackground = () => {
     try {
+      // Remove existing background
       const existingBg = document.getElementById('ios-fixed-background');
       if (existingBg) existingBg.remove();
 
+      // Create new background element
       const backgroundDiv = document.createElement('div');
       backgroundDiv.id = 'ios-fixed-background';
       backgroundDiv.style.cssText = `
         position: fixed;
-        top: calc(-1 * env(safe-area-inset-top));
+        top: 0;
         left: 0;
-        width: 100vw;
-        height: calc(100vh + env(safe-area-inset-top) + env(safe-area-inset-bottom));
+        width: 100%;
+        height: 100%;
         background-image: url('https://uploadthingy.s3.us-west-1.amazonaws.com/q2Cv5K93wFYPkqzZ35hSAd/480738701_1494041901533684_5740182246678582737_n.jpg');
         background-size: cover;
         background-position: center;
         background-repeat: no-repeat;
-        z-index: -1000;
+        background-attachment: scroll;
+        z-index: -100;
         pointer-events: none;
-        will-change: transform;
-        -webkit-transform: translateZ(0);
+        will-change: auto;
       `;
 
-      document.body.prepend(backgroundDiv);
-      console.log('iOS background created');
+      // Insert as first child of body
+      document.body.insertBefore(backgroundDiv, document.body.firstChild);
+      
+      console.log('iOS background created successfully');
 
-      // Ensure sections are transparent but visible
+      // Ensure all sections are transparent
       requestAnimationFrame(() => {
-        document.querySelectorAll('section:not(#hero), footer').forEach(section => {
+        const allSections = document.querySelectorAll('section, footer, main');
+        allSections.forEach(section => {
           const element = section as HTMLElement;
           element.style.backgroundImage = 'none';
           element.style.backgroundColor = 'transparent';
-          element.classList.add('ios-transparent-bg', 'debug-visible');
         });
       });
     } catch (e) {
@@ -170,16 +163,24 @@ export function App() {
     <div 
       className={`main-wrapper min-h-screen font-sans transition-opacity duration-500 ${
         isPageLoaded ? 'opacity-100' : 'opacity-0'
-      } ${isIOS ? 'ios-optimized bg-transparent debug-visible' : 'bg-transparent'}`}
+      } ${isIOS ? 'ios-optimized' : ''}`}
       style={{
-        minHeight: isIOS ? 'calc(var(--vh, 1vh) * 100 + env(safe-area-inset-top) + env(safe-area-inset-bottom))' : '100vh',
+        minHeight: isIOS ? 'var(--ios-height, 100vh)' : '100vh',
         position: 'relative',
-        zIndex: 10,
+        zIndex: 1,
+        backgroundColor: isIOS ? 'transparent' : undefined
       }}
     >
       {showAnnouncement && <AnnouncementBar onClose={() => setShowAnnouncement(false)} />}
       <Navbar activeSection={activeSection} />
-      <main className={isIOS ? 'ios-main-content bg-transparent debug-visible' : ''} style={{ position: 'relative', zIndex: 10 }}>
+      <main 
+        className={isIOS ? 'ios-main-content' : ''}
+        style={{ 
+          position: 'relative', 
+          zIndex: 2,
+          backgroundColor: 'transparent'
+        }}
+      >
         <Hero />
         <AboutSection />
         <BookingSection />

@@ -15,59 +15,61 @@
   <style>
     /* Default body background */
     body {
-      background-color: #f0f0f0;
+      background-color: #000;
       min-height: 100vh;
+      margin: 0;
+      padding: 0;
     }
 
     /* iOS-specific viewport */
     .ios-device {
-      min-height: calc(100vh + env(safe-area-inset-top) + env(safe-area-inset-bottom));
-      height: calc(var(--vh, 1vh) * 100 + env(safe-area-inset-top) + env(safe-area-inset-bottom));
+      min-height: 100vh;
+      height: var(--ios-height, 100vh);
       -webkit-overflow-scrolling: touch;
     }
 
     /* Ensure content visibility on iOS */
-    .ios-device .main-wrapper,
-    .ios-device main,
+    .ios-device .main-wrapper {
+      position: relative;
+      z-index: 1;
+      background-color: transparent;
+    }
+
+    .ios-device main {
+      position: relative;
+      z-index: 2;
+      background-color: transparent;
+    }
+
     .ios-device section,
     .ios-device footer {
       position: relative;
-      z-index: 10; /* Above #ios-fixed-background */
+      z-index: 3;
       background-color: transparent;
     }
 
     /* Optimize backdrop-filter for iOS */
-    .ios-device .backdrop-blur-sm { -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); }
-    .ios-device .backdrop-blur-md { -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
-    .ios-device .backdrop-blur-lg { -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
+    .ios-device .backdrop-blur-sm { 
+      -webkit-backdrop-filter: blur(4px); 
+      backdrop-filter: blur(4px); 
+    }
+    .ios-device .backdrop-blur-md { 
+      -webkit-backdrop-filter: blur(6px); 
+      backdrop-filter: blur(6px); 
+    }
+    .ios-device .backdrop-blur-lg { 
+      -webkit-backdrop-filter: blur(8px); 
+      backdrop-filter: blur(8px); 
+    }
 
     /* Fallback for older iOS */
     @supports not ((-webkit-backdrop-filter: blur(8px)) or (backdrop-filter: blur(8px))) {
       .ios-device .backdrop-blur-sm,
       .ios-device .backdrop-blur-md,
       .ios-device .backdrop-blur-lg {
-        background-color: rgba(255, 255, 255, 0.1);
-        border: 1px solid rgba(255, 255, 255, 0.2);
+        background-color: rgba(255, 255, 255, 0.3);
+        border: 1px solid rgba(255, 255, 255, 0.4);
       }
-    }
-
-    /* Simplify animations for iOS */
-    .ios-device .animate-pulse,
-    .ios-device .animate-slide-in-right,
-    .ios-device .animate-slide-in-left,
-    .ios-device .hover\:scale-105:hover,
-    .ios-device .group-hover\:scale-110 {
-      animation: none !important;
-      transform: none !important;
-      transition: opacity 0.3s ease-out;
-    }
-
-    @keyframes iosFadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
-    }
-    .ios-device .animate-fadeInScale {
-      animation: iosFadeIn 0.5s ease-out;
     }
 
     /* Prevent iOS zoom */
@@ -82,11 +84,14 @@
       loading: lazy;
     }
 
-    /* Debug: Force content visibility */
-    .ios-device .debug-visible {
-      background-color: rgba(255, 255, 255, 0.3) !important;
-      border: 2px solid red !important;
-      z-index: 100 !important;
+    /* Loading state */
+    .main-wrapper {
+      opacity: 0;
+      transition: opacity 0.5s ease;
+    }
+
+    .main-wrapper.loaded {
+      opacity: 1;
     }
   </style>
 </head>
